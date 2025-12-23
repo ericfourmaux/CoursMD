@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Studio Québec Pro v16.0 - Réalisme Acoustique</title>
+    <style>
+        :root { --primary: #00d1b2; --accent: #ffcc33; --bg: #0f0f0f; --panel: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .studio { background: var(--panel); padding: 25px; border-radius: 15px; width: 1100px; border: 1px solid #333; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .dashboard { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #444; }
+        .group { display: flex; flex-direction: column; gap: 5px; font-size: 0.75em; border-right: 1px solid #3d3d3d; padding-right: 10px; }
+        .group:last-child { border: none; }
+        label { color: var(--primary); font-weight: bold; text-transform: uppercase; }
+        input, select { background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 3px; }
+        canvas { width: 100%; height: 100px; background: #000; border-radius: 5px; border: 1px solid var(--primary); margin-bottom: 20px; }
+        .keyboard { display: flex; flex-direction: column; gap: 5px; align-items: center; margin-bottom: 25px; }
+        .v-key { width: 38px; height: 60px; background: #eee; color: #222; border-radius: 0 0 4px 4px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; font-size: 0.7em; cursor: pointer; border: 1px solid #ccc; padding-bottom: 5px; }
+        .v-key.black { background: #222; color: #fff; height: 40px; margin: 0 -19px; width: 30px; z-index: 2; }
+        .v-key.instr { background: #204ecf; color: white; height: 50px; margin-top: 10px; border: none; }
+        .v-key.active { background: var(--accent) !important; color: #000; transform: translateY(2px); box-shadow: 0 0 15px var(--accent); }
+        .seq-container { background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; max-height: 300px; overflow-y: auto; }
+        .track { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .track-label { width: 120px; font-size: 0.7em; color: var(--primary); font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; flex-grow: 1; }
+        .step { height: 22px; background: #2a2a2a; border-radius: 3px; cursor: pointer; }
+        .step.active { background: var(--primary); }
+        .step.playing { border: 2px solid white; }
+        .btn-play { background: var(--primary); color: #000; font-weight: bold; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        #recBtn { background: #ff3860; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin-top: 5px; width: 100%; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="studio">
+    <div class="dashboard">
+        <div class="group">
+            <label>Instrument</label>
+            <select id="instType">
+                <option value="violin">🎻 Violon (Frotté)</option>
+                <option value="trumpet">🎺 Trompette (Cuivré)</option>
+                <option value="banjo">🪕 Banjo (Pincé)</option>
+                <option value="bass">🎸 Basse</option>
+                <option value="eguitar">🎸 Électrique</option>
+                <option value="harpsichord">🎹 Clavecin</option>
+            </select>
+            <label>Distorsion</label>
+            <input type="range" id="distDrive" min="0" max="100" value="0">
+        </div>
+        <div class="group">
+            <label>Résonance Corps</label>
+            <input type="range" id="resonance" min="0" max="40" value="10">
+            <label>Kit Batterie</label>
+            <select id="drumKit">
+                <option value="real">Physique Réel</option>
+                <option value="electro">Électro Pro</option>
+            </select>
+        </div>
+        <div class="group">
+            <label>Vibrato (LFO)</label>
+            <input type="range" id="lfoFreq" min="0" max="10" step="0.1" value="5">
+            <label>Arpégiateur</label>
+            <select id="arpMode">
+                <option value="off">OFF</option>
+                <option value="up">MONTER</option>
+            </select>
+        </div>
+        <div class="group">
+            <label>Timing</label>
+            <span>BPM: <input type="number" id="bpm" value="120" style="width:50px"></span>
+            <span>Swing: <input type="range" id="swing" min="0" max="0.1" step="0.01" value="0"></span>
+            <span>Human: <input type="range" id="human" min="0" max="0.05" step="0.001" value="0.005"></span>
+        </div>
+        <div class="group" style="border:none;">
+            <button class="btn-play" id="playBtn">DÉMARRER</button>
+            <button id="recBtn">REC .WAV</button>
+            <span style="font-size:0.8em; text-align:center; margin-top:5px;">Octave: <b id="octDisp">4</b></span>
+        </div>
+    </div>
+
+    <canvas id="scope"></canvas>
+
+    <div class="keyboard">
+        <div id="keys-black" style="display:flex; justify-content:center; margin-bottom:-20px;"></div>
+        <div id="keys-white" style="display:flex; justify-content:center;"></div>
+        <div id="keys-drums" style="display:flex; justify-content:center; gap:5px; margin-top:10px;"></div>
+    </div>
+
+    <div class="seq-container" id="sequencer"></div>
+</div>
+
+<script>
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const mainGain = ctx.createGain();
+    const analyser = ctx.createAnalyser();
+    const distNode = ctx.createWaveShaper();
+    const bodyRes = ctx.createBiquadFilter(); bodyRes.type = "peaking";
+    
+    mainGain.connect(distNode); distNode.connect(bodyRes); bodyRes.connect(analyser);
+    analyser.connect(ctx.destination);
+
+    let octave = 4; let playing = false; let stepIdx = 0; let timer;
+    let activeOscs = {};
+    const notes = {'white':{'a':261.6,'s':293.6,'d':329.6,'f':349.2,'g':392,'h':440,'j':493.8,'k':523.2},
+                   'black':{'q':277.2,'w':311.1,'r':369.9,'t':415.3,'y':466.1}};
+    const drumMap = {'z':'kick','x':'snare','c':'hihat','v':'clap','b':'tom','n':'cymbale'};
+
+    function makeDist(amount) {
+        let n = 44100, curve = new Float32Array(n), x;
+        for (let i=0; i<n; i++) { x = i*2/n-1; curve[i] = (3+amount)*x*20*(Math.PI/180)/(Math.PI+amount*Math.abs(x)); }
+        return curve;
+    }
+
+    // --- SYNTHÈSE AVANCÉE ---
+    function startNote(f) {
+        if (activeOscs[f]) return;
+        const inst = document.getElementById('instType').value;
+        const now = ctx.currentTime;
+        const res = document.getElementById('resonance').value;
+        
+        distNode.curve = makeDist(document.getElementById('distDrive').value);
+        bodyRes.Q.value = res;
+
+        const g = ctx.createGain();
+        const osc = ctx.createOscillator();
+        const filt = ctx.createBiquadFilter(); // Filtre dédié par note
+
+        if(inst === 'violin') {
+            // VIOLON : Sawtooth + Bruit de frottement + Attaque lente
+            osc.type = 'sawtooth';
+            bodyRes.frequency.value = 500; // Résonance bois violon
+            
+            // Simulation archet (friction)
+            const noise = ctx.createBufferSource();
+            const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+            for(let i=0; i<b.length; i++) b.getChannelData(0)[i] = Math.random()*0.05;
+            noise.buffer = b; noise.loop = true;
+            const nG = ctx.createGain(); nG.gain.value = 0.02;
+            noise.connect(nG).connect(g); noise.start();
+            activeOscs[f+"_noise"] = noise;
+
+            g.gain.setValueAtTime(0, now);
+            g.gain.linearRampToValueAtTime(0.4, now + 0.15); // Attaque d'archet
+            
+            // Vibrato LFO
+            const vib = ctx.createOscillator(); 
+            vib.frequency.value = document.getElementById('lfoFreq').value;
+            const vG = ctx.createGain(); vG.gain.value = 4;
+            vib.connect(vG).connect(osc.frequency); vib.start();
+            activeOscs[f+"_vib"] = vib;
+
+        } else if(inst === 'trumpet') {
+            // TROMPETTE : Filtre qui s'ouvre (Brassy Swell)
+            osc.type = 'sawtooth';
+            filt.type = 'lowpass';
+            filt.frequency.setValueAtTime(200, now);
+            filt.frequency.exponentialRampToValueAtTime(3000, now + 0.1); // L'éclat du cuivre
+            
+            g.gain.setValueAtTime(0, now);
+            g.gain.linearRampToValueAtTime(0.5, now + 0.05);
+            osc.connect(filt);
+        } else if(inst === 'banjo') {
+            osc.type = 'sawtooth';
+            bodyRes.frequency.value = 1000; // Résonance métallique banjo
+            g.gain.setValueAtTime(0.7, now);
+            g.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        } else {
+            osc.type = (inst==='bass')?'triangle':'sawtooth';
+            g.gain.setValueAtTime(0.3, now);
+        }
+
+        osc.frequency.value = f * Math.pow(2, octave - (inst==='bass'?5:4));
+        if(inst==='trumpet') filt.connect(g); else osc.connect(g);
+        g.connect(mainGain);
+        osc.start();
+        activeOscs[f] = {osc, g};
+    }
+
+    function stopNote(f) {
+        if (activeOscs[f]) {
+            const {osc, g} = activeOscs[f];
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+            osc.stop(ctx.currentTime + 0.3);
+            if(activeOscs[f+"_vib"]) activeOscs[f+"_vib"].stop();
+            if(activeOscs[f+"_noise"]) activeOscs[f+"_noise"].stop();
+            delete activeOscs[f];
+        }
+    }
+
+    // --- BATTERIE PHYSIQUE ---
+    function playDrum(type) {
+        const h = parseFloat(document.getElementById('human').value);
+        const now = ctx.currentTime + (Math.random()*h);
+        const g = ctx.createGain(); g.connect(ctx.destination);
+        if(type==='kick') {
+            const o = ctx.createOscillator(); o.frequency.setValueAtTime(150, now);
+            o.frequency.exponentialRampToValueAtTime(40, now+0.2);
+            g.gain.setValueAtTime(1, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.2);
+            o.connect(g); o.start(); o.stop(now+0.2);
+        } else if(type==='snare') {
+            const n = ctx.createBufferSource();
+            const b = ctx.createBuffer(1, ctx.sampleRate*0.1, ctx.sampleRate);
+            for(let i=0; i<b.length; i++) b.getChannelData(0)[i] = Math.random()*2-1;
+            n.buffer = b;
+            const f = ctx.createBiquadFilter(); f.frequency.value = 1000;
+            g.gain.setValueAtTime(0.4, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.15);
+            n.connect(f).connect(g); n.start();
+        } else if(type==='hihat') {
+            const o = ctx.createOscillator(); o.type='square'; o.frequency.value=10000;
+            g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.05);
+            o.connect(g); o.start(); o.stop(now+0.05);
+        }
+    }
+
+    // --- UI & LOOP ---
+    const tracks = ['Lead', 'Kick', 'Snare', 'HiHat', 'Clap'];
+    tracks.forEach(t => {
+        const tr = document.createElement('div'); tr.className='track';
+        tr.innerHTML = `<div class="track-label">${t}</div><div class="grid" id="grid-${t.toLowerCase()}"></div>`;
+        document.getElementById('sequencer').appendChild(tr);
+        for(let i=0; i<16; i++) {
+            const s = document.createElement('div'); s.className='step';
+            if(localStorage.getItem(`v16-${t}-${i}`)==='true') s.classList.add('active');
+            s.onclick = () => { s.classList.toggle('active'); localStorage.setItem(`v16-${t}-${i}`, s.classList.contains('active')); };
+            tr.querySelector('.grid').appendChild(s);
+        }
+    });
+
+    const drawK = (id, parent, cls, lbl) => {
+        const d = document.createElement('div'); d.className='v-key '+cls; d.id='k-'+id;
+        d.innerHTML = `<b>${id.toUpperCase()}</b><br>${lbl}`;
+        document.getElementById(parent).appendChild(d);
+        d.onmousedown = () => { if(notes.white[id]||notes.black[id]) startNote(notes.white[id]||notes.black[id]); if(drumMap[id]) playDrum(drumMap[id]); d.classList.add('active'); };
+        d.onmouseup = () => { stopNote(notes.white[id]||notes.black[id]); d.classList.remove('active'); };
+    };
+    Object.keys(notes.black).forEach(k => drawK(k, 'keys-black', 'black', ''));
+    Object.keys(notes.white).forEach(k => drawK(k, 'keys-white', 'white', ''));
+    Object.entries(drumMap).forEach(([k,v]) => drawK(k, 'keys-drums', 'instr', v));
+
+    function loop() {
+        const bpm = document.getElementById('bpm').value;
+        const grids = tracks.map(t => document.getElementById(`grid-${t.toLowerCase()}`).children);
+        grids.forEach(g => { Array.from(g).forEach(s => s.classList.remove('playing')); g[stepIdx].classList.add('playing'); });
+        if(grids[0][stepIdx].classList.contains('active')) { startNote(261.6); setTimeout(()=>stopNote(261.6), 150); }
+        if(grids[1][stepIdx].classList.contains('active')) playDrum('kick');
+        if(grids[2][stepIdx].classList.contains('active')) playDrum('snare');
+        if(grids[3][stepIdx].classList.contains('active')) playDrum('hihat');
+        stepIdx = (stepIdx + 1) % 16;
+        const sw = (stepIdx % 2 === 0) ? 0 : parseFloat(document.getElementById('swing').value);
+        timer = setTimeout(loop, ((60/bpm/4) + sw) * 1000);
+    }
+
+    document.getElementById('playBtn').onclick = () => {
+        if(!playing) { ctx.resume(); loop(); document.getElementById('playBtn').innerText="ARRÊTER"; }
+        else { clearTimeout(timer); document.getElementById('playBtn').innerText="DÉMARRER"; }
+        playing = !playing;
+    };
+
+    window.onkeydown = (e) => {
+        const k = e.key.toLowerCase();
+        if(k >= '1' && k <= '9') { octave = k; document.getElementById('octDisp').innerText=k; }
+        if(notes.white[k] || notes.black[k]) startNote(notes.white[k] || notes.black[k]);
+        if(drumMap[k]) playDrum(drumMap[k]);
+        const dk = document.getElementById('k-'+k); if(dk) dk.classList.add('active');
+    };
+    window.onkeyup = (e) => {
+        const k = e.key.toLowerCase(); stopNote(notes.white[k] || notes.black[k]);
+        const dk = document.getElementById('k-'+k); if(dk) dk.classList.remove('active');
+    };
+
+    const sCtx = document.getElementById('scope').getContext('2d');
+    function draw() {
+        requestAnimationFrame(draw);
+        const d = new Uint8Array(analyser.frequencyBinCount); analyser.getByteTimeDomainData(d);
+        sCtx.fillStyle='#000'; sCtx.fillRect(0,0,1100,100);
+        sCtx.strokeStyle='#00d1b2'; sCtx.beginPath();
+        let x=0; for(let i=0; i<d.length; i++) {
+            let y = (d[i]/128.0)*50; if(i===0) sCtx.moveTo(x,y); else sCtx.lineTo(x,y); x+=1100/d.length;
+        }
+        sCtx.stroke();
+    }
+    draw();
+</script>
+</body>
+</html>
