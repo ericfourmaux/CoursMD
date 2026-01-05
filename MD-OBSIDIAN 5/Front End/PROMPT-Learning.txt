@@ -1,0 +1,35 @@
+Obtenir un cours complet:
+
+
+Je souhaite que tu agisses comme un expert en [Sujet]. Ton objectif est de me rédiger un cours complet, tel un professeur qui transmet tout son savoir, de niveau parfaitement débutant, qui entre dans les détails techniques et précis, et ne se contente pas de généralités.
+Consignes de rédaction :
+1. Utilise un ton pédagogique, clair mais rigoureux.
+2. Pour chaque concept clé, donne une définition précise, une explication du 'pourquoi' et un exemple concret.
+3. Utilise des analogies pour expliquer les points complexes.
+4. Structure le cours avec des titres, des sous-titres et des listes à puces.
+5. Utilise des icones pour identifier les chapitres, les exemples, etc..
+6. Les formules mathématiques, s'il y en a, doivent être représentées en Javascript.
+7. Crée un fichier téléchargeable au format .md « Obsidian » de chaque chapitre complet, avec code, schémas, icones, etc.. tel que tu l'as présenté dans le cours, et sans omettre aucun contenu.
+Commence par me proposer un plan détaillé du cours (Syllabus) divisé en chapitres logiques. Attends ma validation avant de rédiger le contenu.
+
+
+
+
+Ensuite: 
+
+
+Excellent plan ! Maintenant, rédige le Chapitre 1. Sois extrêmement détaillé, inclus les formules/théories en Javascript nécessaires et termine par un petit résumé des points essentiels. 
+
+
+ALTERNATIVE:
+
+Excellent plan ! Maintenant, Prépare chaque chapitre, sans montrer de contenu ni d'extrait, au complet au format .md téléchargeable, avec un fichier index.md qui reprend le syllabus. Sois extrêmement détaillé, inclus les formules/théories en Javascript si nécessaire et termine par un petit résumé des points essentiels pour chaque chapitre. Considères toi comme un enseignant appliqué, qui déploie tous les efforts nécessaires pour que son étudiant puisse comprendre chaque chapitre sans aucune difficulté, et ce malgré son niveau débutant.
+
+
+
+Si un passage vous semble encore trop vague, utilisez ces relances :
+
+
+* "Peux-tu approfondir le mécanisme technique derrière ce point ?"
+* "Quelles sont les limites ou les critiques de cette théorie ?"
+* "Donne-moi une étude de cas réelle pour illustrer ce concept."
