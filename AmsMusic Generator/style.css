@@ -1,0 +1,105 @@
+/* public/style.css */
+:root {
+  --bg: #0f1220;
+  --panel: #151a2d;
+  --text: #f0f3ff;
+  --muted: #a9b0d9;
+  --accent: #77e3ff;
+  --accent-2: #ff9c6a;
+  --border: #2a3358;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+main {
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+h1, h2 {
+  margin: 0 0 0.75rem 0;
+  font-weight: 700;
+}
+
+section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+#transport {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+button {
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #202746 0%, #1a203a 100%);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.06s ease, box-shadow 0.15s ease;
+}
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25), 0 0 0 1px var(--accent);
+}
+button:active { transform: translateY(0); }
+
+label {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0.4rem 0;
+  color: var(--muted);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+input[type="number"], input[type="text"] {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0e1324;
+  color: var(--text);
+}
+input[type="checkbox"] {
+  transform: scale(1.1);
+  accent-color: var(--accent-2);
+}
+
+#synth-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1rem;
+}
+#synth-controls h2 {
+  grid-column: 1 / -1;
+}
+
+footer {
+  margin: 2rem 0 1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
